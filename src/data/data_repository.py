@@ -1,6 +1,7 @@
 import pandas as pd
 
 from src.data.identifiers.identifier import Identifier, SummaryIdentifier
+from src.data.filters import *
 
 class DataRepository():
     """
@@ -168,6 +169,29 @@ class DataRepository():
     def count(self):
         return len(self._data.keys())
     
+    def join(self, other_repo):
+        """
+        Joins another DataRepository into this one. Raises an error if any identifier
+        from the other repository already exists in this repository.
+        
+        Args:
+            other_repo (DataRepository): The repository to join into this one.
+        
+        Raises:
+            ValueError: If there is an identifier collision.
+        """
+        if not isinstance(other_repo, DataRepository):
+            raise TypeError("Expected other_repo to be an instance of DataRepository.")
+
+        overlapping_ids = [id_ for id_ in other_repo.get_ids() if self.contains(id_)]
+        if overlapping_ids:
+            overlap_str = "\n  ".join(str(id_) for id_ in overlapping_ids)
+            raise ValueError(f"Cannot join repositories. The following identifiers already exist:\n  {overlap_str}")
+        
+        for id_ in other_repo.get_ids():
+            data, metadata = other_repo.get(id_)
+            self.add(id_, data, metadata)
+
     def print_contents(self, include_metadata=False):
         print("Summary of DataRepository:")
         for identifier in self.get_ids():

@@ -4,7 +4,6 @@ io*
 output*
 input*
 temp
-*response.json
 *notes.txt
 *.DS_Store
 .vscode/

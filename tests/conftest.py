@@ -8,23 +8,29 @@ from src.program_data.arguments import parse_file_list
 
 @pytest.fixture
 def default_config():
+
     return {
         "base_url": "https://thanos.nrp-nautilus.io/api/v1/query_range",
         "step": 3600,
-        "query": r"""
-            kube_pod_container_resource_requests{
-                namespace=~"csusb.*|csu.*|cal-poly-humboldt.*|sdsu-.*|csun-.*|nsf-maica", 
-                namespace!~"sdsu-jupyterhub.*", 
-                resource = "%TYPE_STRING%", 
-                node=~"rci-tide.*|rci-nrp-gpu-08.*|rci-nrp-gpu-07.*|rci-nrp-gpu-06.*|rci-nrp-gpu-05.*", 
-                node!~"rci-tide-dtn.*"
-            } * on(uid, ) group_left(phase) 
-            kube_pod_status_phase{
-                phase="Running", 
-                namespace=~"csusb.*|csu.*|cal-poly-humboldt.*|sdsu-.*|csun-.*|nsf-maica", 
-                namespace!~"sdsu-jupyterhub.*"
-            }""",
-        "top5hours_blacklist": ["sdsu-rci-jh", "csu-tide-jupyterhub"]
+        "queries": {
+            "status": r"""
+                kube_pod_status_phase{
+                    phase=~"Running|Pending", 
+                    namespace=~"csusb.*|csu.*|ccp-.*|cal-poly-.*|sdsu-.*|csun-.*|nsf-maica",
+                    namespace!~"sdsu-jupyterhub.*
+                }
+            """,
+            "truth": r"""
+                kube_pod_container_resource_requests{
+                    namespace=~"csusb.*|csu.*|ccp-.*|cal-poly-.*|sdsu-.*|csun-.*|nsf-maica",
+                    namespace!~"sdsu-jupyterhub.*", 
+                    resource = "%TYPE_STRING%", 
+                    node=~"rci-tide.*|rci-nrp-gpu-08.*|rci-nrp-gpu-07.*|rci-nrp-gpu-06.*|rci-nrp-gpu-05.*", 
+                    node!~"rci-tide-dtn.*"
+                }
+            """
+        },
+        "top5hours_blacklist": ["sdsu-rci-jh", "csu-tide-jupyterhub, csusb-jupyterhub"]
     }
 
 @pytest.fixture

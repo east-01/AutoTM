@@ -6,7 +6,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
 from src.program_data.program_data import load_std_prog_data
-from src.data.ingest.ingest import ingest
+from data.ingest.ingest import ingest
 from src.analysis.analysis import analyze
 from src.visualization.visualizations import vizualize
 from src.data.processors import *
@@ -28,6 +28,9 @@ print("Starting ingest...")
 prog_data.data_repo = ingest(prog_data)
 prog_data.data_repo = process_periods(prog_data.data_repo)
 prog_data.data_repo = generate_metadata(prog_data.data_repo, prog_data.config)
+
+if(has_overlaps(prog_data.data_repo)):
+    print("Error: The ingested DataRepository has overlapping timestamps for some of its SourceData. This is not allowed- if using FileSystem ingest try PromQL instead.")
 
 if(prog_data.args.verbose):
     prog_data.data_repo.print_contents()

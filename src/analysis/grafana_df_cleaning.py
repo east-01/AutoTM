@@ -1,4 +1,4 @@
-from src.data.ingest.grafana_df_analyzer import extract_column_data
+from src.data.ingest.grafana_df_analyzer import _extract_column_data
 
 def has_time_column(df):
     return df.columns[0]=="Time"
@@ -22,7 +22,7 @@ def clear_duplicate_uids(df):
 
     def is_not_duplicate(col_name):
         nonlocal uids
-        col_data = extract_column_data(col_name)
+        col_data = _extract_column_data(col_name)
         uid = col_data['uid']
         if(uid in uids):
             return False
@@ -45,5 +45,5 @@ def clear_blacklisted_uids(df, blacklist):
     if(has_time_column(df)):
         df = clear_time_column(df)
 
-    df_included_columns = [col_name for col_name in df.columns if extract_column_data(col_name)['uid'] not in blacklist]
+    df_included_columns = [col_name for col_name in df.columns if _extract_column_data(col_name)['uid'] not in blacklist]
     return df[df_included_columns]

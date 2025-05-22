@@ -35,7 +35,10 @@ class VisualizationVariables():
             if(variable_value is None):
                 raise Exception(f"Failed to resolve corresponding analysis variable for {targ_analysis}, current SourceID: {identifier.find_source()}")
 
-            self.parsed_variables[variable_name] = variable_value
+            if(variable_value is None):
+                variable_value = variable_name
+            else:
+                self.parsed_variables[variable_name] = variable_value
 
         src_id: SourceIdentifier = identifier.find_source()
         range_data = get_range_as_month(src_id.start_ts, src_id.end_ts, prog_data.config['step'])

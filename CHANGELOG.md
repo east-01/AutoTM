@@ -5,6 +5,14 @@ All notable changes to **AutoTM (Tide Metrics Automation)** will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - XXXX-XX-XX
+### TODO
+- Upgrade argument parsing: subparsers and add_mutually_exclusive_group
+- Add tests for DataRepository#Join
+- Add tests for Processors#check_overlaps
+- Add tests for new filters
+- Bug with unix timestamp range
+
 ## [1.0.2] - 2025-04-28
 ### Added
 - Tests for hours analysis

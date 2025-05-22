@@ -1,10 +1,15 @@
 import datetime
-import calendar
+import pandas as pd
 
 from src.program_data.settings import settings
-from src.utils.timeutils import to_unix_ts, get_unix_timestamp_range
+from src.utils.timeutils import to_unix_ts
 
-def extract_column_data(col_name):
+def convert_to_numeric(df: pd.DataFrame):
+    # Convert the data frame to numeric values so we can properly analyze it later.
+    df.iloc[:, 1:] = df.iloc[:, 1:].map(pd.to_numeric, errors="coerce")
+    return df
+
+def _extract_column_data(col_name):
     """
     Given a column name with the format {label1="value1", label2="value2",...} break it down into a
       usable python dictionary.
@@ -40,7 +45,7 @@ def get_resource_type(df):
             DataFrame, the settings["type_string"] doesn't contain the target type- the function
             won't be able to reverse the program type from the type string.
     """
-    col_datas = [extract_column_data(col_name) for col_name in df.columns[1:]]
+    col_datas = [_extract_column_data(col_name) for col_name in df.columns[1:]]
 
     # Create a set of all the type strings, this will give a list of unique type names
     type_set = set()
@@ -84,20 +89,10 @@ def get_period(df):
     
     start = to_unix_ts(times[0])
     start_dt = datetime.datetime.fromtimestamp(start)
-    # TODO: Functionality will be covered by period filter (see main.py)
-    # start_range = get_unix_timestamp_range(start_dt.month, start_dt.year)
-    # if(start != start_range[0]):
-    #     print(f"WARN: Inferring time range start to the first second of the month {start} -> {start_range[0]}")
-    #     start = start_range[0]
 
     end = to_unix_ts(times[-1])
     end_dt = datetime.datetime.fromtimestamp(end)
-    # TODO: Functionality will be covered by period filter (see main.py)
-    # end_range = get_unix_timestamp_range(end_dt.month, end_dt.year)
-    # if(end != end_range[1]):
-    #     print(f"WARN: Inferring time range end to the last second of the month {end} -> {end_range[1]}")
-    #     end = end_range[1]
-
+    
     if(start_dt.month != end_dt.month or start_dt.year != end_dt.year):
         print("ERROR: Analyzing df's period shows that the start and end times belong to different months. This will most likely yield broken results. Try using a PromQL query instead of input directory.")
 

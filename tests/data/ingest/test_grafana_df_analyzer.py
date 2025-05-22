@@ -1,10 +1,10 @@
 import pytest
 import pandas as pd
 
-from src.data.ingest.grafana_df_analyzer import *
+from src.data.ingest.grafana_df_analyzer import get_period, get_resource_type, _extract_column_data
 
 def test_extract_column_data_meaningless():
-    data = extract_column_data("{label1=\"value1\", label2=\"value2\"}")
+    data = _extract_column_data("{label1=\"value1\", label2=\"value2\"}")
 
     assert data["label1"] == "value1"
     assert data["label2"] == "value2"
@@ -15,7 +15,7 @@ def column_data():
     return "{container=\"chp\", instance=\"10.244.17.213:8443\", job=\"kube-state-metrics\", namespace=\"sdsu-rci-jh\", node=\"rci-nrp-gpu-05.sdsu.edu\", phase=\"Running\", pod=\"proxy-6c5688584b-kxptk\", prometheus=\"monitoring/k8s\", resource=\"cpu\", uid=\"65f8e2f3-c9be-4461-87a8-e8329a788499\", unit=\"core\"}"
 
 def test_extract_column_data(column_data):
-    data = extract_column_data(column_data)
+    data = _extract_column_data(column_data)
 
     assert data["container"] == "chp"
     assert data["instance"] == "10.244.17.213:8443"

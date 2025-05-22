@@ -6,6 +6,57 @@ import datetime
 from src.program_data.settings import settings
 from src.utils.timeutils import get_unix_timestamp_range
 
+def load_arguments():
+    """
+    Using the argparse library, parse the command line arguments into usable data.
+    """
+
+    parser = argparse.ArgumentParser(prog='AutoTM', description='Auto Tide Metrics- Collect and visualize tide metrics')
+
+    # These arguments will be populated if defaults arent provided
+    # We could use default=__ here, but I want to be able to provide warnings in verify_arguments if necessary.
+    parser.add_argument('analysis_options', type=parse_analysis_options, help="A list of analysis options separated by a comma (no spaces).")
+
+    # Ingest options
+    ingest_group = parser.add_argument_group("Ingest options", "Options for reading data")
+    group = ingest_group.add_mutually_exclusive_group(required=True)
+    group.add_argument('-p', '--period', dest='period', type=parse_time_range, help="A time range of the format <start>-<end> where your start and end times are UNIX timestamps.")
+    group.add_argument('-f', '--file', dest='file', type=parse_file_list, help="A local file/directory to be used instead of polling Prometheus.")
+    ingest_group.add_argument('-u', '--users', dest='users', action='store_true', help="Ingest users from JupyterHub sources specified in config.")
+
+    # Output options
+    output_group = parser.add_argument_group("Output options", "Options for data output")
+    output_group.add_argument('-o', '--outdir', dest='outdir', type=str, help="The directory to send output files to.")
+
+    parser.add_argument('-v', dest='verbose', action='store_true', help="Enable verbose output.")
+
+    return parser.parse_args()
+
+def verify_arguments(prog_data):
+    args = prog_data.args
+
+    if(not isinstance(args.analysis_options, list)):
+        raise ArgumentException("Analysis options is not a list.")
+
+    # Populate additional analyses to perform from requirements
+    for to_perform in args.analysis_options:
+        for requirement in prog_data.settings["analysis_settings"][to_perform]["requires"]:
+            if(requirement not in args.analysis_options):
+                print(f"Added additional analysis \"{requirement}\" as it is a requirement of \"{to_perform}\"")
+                args.analysis_options.append(requirement)
+
+    if(args.file is not None and args.period is not None):
+        # If the file exists, provide warnings about other arguments that won't be used
+        raise ArgumentException("Both file and period arguments provided, these arguments are mutually exclusive and you must select one.")
+
+    if(args.period is not None):
+        now = int(time.time())
+        if(args.period[0] > now or args.period[1] > now):
+            raise ArgumentException("Either the start or end times of the period exceeds current time.")
+
+class ArgumentException(Exception):
+    pass
+
 def is_integer(value):
     """
     Ensure a python value is either a true integer or an integer string.
@@ -89,46 +140,3 @@ def parse_file_list(path):
         return file_paths
     else:
         raise ArgumentException(f"Can't parse file list, path provided \"{path}\" is neither a file or directory.")
-
-def load_arguments():
-    """
-    Using the argparse library, parse the command line arguments into usable data.
-    """
-
-    parser = argparse.ArgumentParser(prog='AutoTM', description='Auto Tide Metrics- Collect and visualize tide metrics')
-
-    # These arguments will be populated if defaults arent provided
-    # We could use default=__ here, but I want to be able to provide warnings in verify_arguments if necessary.
-    parser.add_argument('analysis_options', type=parse_analysis_options, help="A list of analysis options separated by a comma (no spaces).")
-    parser.add_argument('-p', '--period', dest='period', type=parse_time_range, help="A time range of the format <start>-<end> where your start and end times are UNIX timestamps.")
-
-    parser.add_argument('-f', '--file', dest='file', type=parse_file_list, help='A local file/directory to be used instead of polling Prometheus.')
-    parser.add_argument('-o', '--outdir', dest='outdir', type=str, help='The directory to send output files to.')
-    parser.add_argument('-v', dest='verbose', action='store_true', help="Enable verbose output.")
-
-    return parser.parse_args()
-
-def verify_arguments(prog_data):
-    args = prog_data.args
-
-    if(not isinstance(args.analysis_options, list)):
-        raise ArgumentException("Analysis options is not a list.")
-
-    # Populate additional analyses to perform from requirements
-    for to_perform in args.analysis_options:
-        for requirement in prog_data.settings["analysis_settings"][to_perform]["requires"]:
-            if(requirement not in args.analysis_options):
-                print(f"Added additional analysis \"{requirement}\" as it is a requirement of \"{to_perform}\"")
-                args.analysis_options.append(requirement)
-
-    if(args.file is not None and args.period is not None):
-        # If the file exists, provide warnings about other arguments that won't be used
-        raise ArgumentException("Both file and period arguments provided, these arguments are mutually exclusive and you must select one.")
-
-    if(args.period is not None):
-        now = int(time.time())
-        if(args.period[0] > now or args.period[1] > now):
-            raise ArgumentException("Either the start or end times of the period exceeds current time.")
-
-class ArgumentException(Exception):
-    pass
