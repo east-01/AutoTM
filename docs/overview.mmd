@@ -1,0 +1,58 @@
+---
+config:
+      theme: dark
+---
+flowchart LR    
+
+    subgraph in_promQL["PromQL Ingest"]
+        direction LR
+        A(["Ingest - PromQL"])-->
+            C[("SourceQueryIdentifier DataRepository")]-->
+                D("Running/Pending Processor")
+    end
+
+        D-->E[("`Standard DataRepository<br>
+                _All data must be in Grafana DataFrame format_`")]
+
+        B(["Ingest - FileSystem"])-->E
+
+        E-->F(Metadata generation)
+
+        F-->G("`Analysis<br>_Analyses are performed in sequence order, with specific implementations varying_`")
+
+    subgraph analysis["Analysis Implementation"]
+        direction LR
+        filter(["`Filter<br>
+                _Filter is applied to DataRepository retrieving all Identifiers that are relevant_`"])-->
+            method("`Method<br>
+                    _Method call has specific analysis implementation, returns data to be added to DataRepository_`")-->
+                data("`Data is created<br>
+                        _An AnalysisIdentifier is created targeting the specific Identifier that the analysis was performed on_`")
+    end    
+
+        G-->analysis
+        G-->I(...)
+        G-->J(...)
+
+        DR2[("`Standard DataRepository<br>
+                _Contains ingested data and analysis data_`")]
+
+        data-->DR2
+        I-->DR2
+        J-->DR2
+
+        DR2-->vis("`Visualization<br>_DataRepository is scanned for analyses with visualization settings_`")
+        DR2-->summaries("`Summarization<br>_If all relevant analyses are present, generate summaries_`")
+
+        vis-->DR3[("`Standard DataRepository<br>
+                    _Contains ingested data, analysis data, visualizations, and summaries_`")]
+        summaries-->DR3
+
+        DR3-->saving("`Save Data<br>_Save all data in DataRepository, using Saver classes to handle each data type_`")
+
+        saving-->DataFrameSaver
+        saving-->AnalysisSaver
+        saving-->SummarySaver
+        saving-->VisualizationsSaver
+
+        

@@ -32,9 +32,6 @@ class TimeStampIdentifier(Identifier):
     def __str__(self) -> str:
         return f"timestamps {self.start_ts}-{self.end_ts}"
 
-# SourceQueryIdentifier(10, 20, None, "status")
-# SourceQueryIdentifier(10, 20, "gpu", "truth") (truth->values)
-
 @dataclass(frozen=True)
 class SourceIdentifier(TimeStampIdentifier):
     """

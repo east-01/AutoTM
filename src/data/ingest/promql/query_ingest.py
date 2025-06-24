@@ -105,7 +105,7 @@ def _filter_to_running_pending(prog_data: ProgramData, data_repo: DataRepository
                 continue
         
             values_df_raw = data_repo.get_data(values_identifier)
-            print(f"preprocessing values for {values_identifier}")
+            print(f"\npreprocessing values for {values_identifier}")
             last_timestamp = time.time()
             values_df = _preprocess_df(values_df_raw, True, step)
             print(f"done in {time.time() - last_timestamp}")
@@ -131,6 +131,9 @@ def _filter_cols_zero(df: pd.DataFrame):
     
     df.drop(columns=df.columns[df.sum() == 0], inplace=True)
     return df    
+
+import time
+import numpy as np
 
 def _merge_columns_on_uid(df: pd.DataFrame, preserve_columns: bool = False):
     """
@@ -167,9 +170,30 @@ def _merge_columns_on_uid(df: pd.DataFrame, preserve_columns: bool = False):
     time_col = df['Time'] # Separate Time column
     df = df.drop(columns='Time')
 
-    df.columns = [select_uid(col) for col in df.columns]
+    uids = [select_uid(col) for col in df.columns]
+    df.columns = uids
 
-    df = df.T.groupby(df.columns).max().T # Merge columns with the same UID
+    time_start = time.time()
+    order = np.argsort(uids)
+    df = df.iloc[:, order]
+    print(f"sort took {(time.time() - time_start):.1f}s")
+
+    seen_uids = set() # The set of uids that have been visited in the loop
+    duplicate_uids = set() # The set of uids that have more than one column
+    for uid in uids:
+        if(uid in seen_uids):
+            duplicate_uids.add(uid)
+        
+        seen_uids.add(uid)
+        
+    to_merge_df = df[list(duplicate_uids)]
+    static_df = df[list(seen_uids-duplicate_uids)]
+
+    time_start = time.time()
+    to_merge_df = to_merge_df.T.groupby(to_merge_df.columns).max().T # Merge columns with the same UID
+    print(f"groupby took {(time.time() - time_start):.1f}s")
+
+    df = pd.concat([static_df, to_merge_df], axis=1)
 
     if(preserve_columns):
         df.columns = [orig_names[uid] for uid in df.columns]
